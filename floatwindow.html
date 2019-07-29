@@ -1,0 +1,190 @@
+<!-- jsp语法 -->
+<#list list_news as news>
+    <script>
+
+        $(window).on("load", () => {
+
+            // 是否有维护文章源--JSP语法
+            if (${ size }) {
+            var floatWindow = function () {
+                return {
+                    init: function () {
+                        this.fw = $('#fw_box');
+                        this.fw.show();
+
+
+                        // X轴速度
+                        this.speed_X = 20;
+                        // Y轴速度
+                        this.speed_Y = 20;
+
+                        this.currentX = 0;
+                        this.currentY = 0;
+
+                        //目标点是不是原点
+                        this.targetXIsOrigin = false;
+                        this.targetYIsOrigin = false;
+
+                        // 获取屏幕、浮窗宽高，计算边距
+                        this.calBorder();
+
+                        // 绑定事件
+                        this.initEvent();
+                        // 启动
+                        this.move();
+                    },
+                    move: () => {
+                        var self = floatWindow;
+
+
+                        // 计算目标值
+                        var targetX = self.targetXIsOrigin ? 0 : self.maxWidth;
+                        var targetY = self.targetYIsOrigin ? 0 : self.maxHeight;
+
+                        // X到目标点所需时间 
+                        var time_X = Math.abs((targetX - self.currentX) / self.speed_X);
+
+                        // Y到目标点所需时间 
+                        var time_Y = Math.abs((targetY - self.currentY) / self.speed_Y);
+
+                        // 去Y目标点比较快
+                        if (time_X > time_Y) {
+                            self.fw.css({
+                                "transform": 'translate(' + ((self.speed_X * time_Y) + self.currentX) + 'px,' + targetY + 'px)',
+                                "transition-duration": time_Y + 's'
+                            })
+                            clearTimeout(self.timer);
+                            self.timer = setTimeout(() => {
+                                // 更新目标值
+                                self.targetYIsOrigin = !self.targetYIsOrigin;
+                                // 更新当前值
+                                self.currentX = (self.speed_X * time_Y) + self.currentX;
+                                self.currentY = targetY;
+                                // 更新速度方向
+                                self.speed_Y *= -1;
+                                // 执行下一次移动
+                                self.move();
+                            }, time_Y * 1000);
+                        } else if (time_X <= time_Y) {
+                            self.fw.css({
+                                "transform": 'translate(' + targetX + 'px,' + ((self.speed_Y * time_X) + self.currentY) + 'px)',
+                                "transition-duration": time_X + 's'
+                            })
+                            clearTimeout(self.timer);
+                            self.timer = setTimeout(() => {
+                                self.targetXIsOrigin = !self.targetXIsOrigin;
+                                self.currentX = targetX;
+                                self.currentY = (self.speed_Y * time_X) + self.currentY;
+                                self.speed_X *= -1;
+                                self.move();
+                            }, time_X * 1000);
+                        }
+                    },
+                    calBorder: () => {
+                        var self = floatWindow;
+                        var windowWidth = $(window).width();//浏览器宽度
+                        var windowHeight = $(window).height();//浏览器高度
+                        var fwWidth = self.fw.width();
+                        var fwHeight = self.fw.height();
+
+                        self.maxWidth = windowWidth - fwWidth;
+                        self.maxHeight = windowHeight - fwHeight;
+
+                        //检查是否被挤飞
+                        if (self.currentX > self.maxWidth) {
+                            self.fw.css({
+                                transform: 'translate(' + 0 + 'px,' + self.currentY + 'px)'
+                            })
+                            self.currentX = 0;
+                        }
+                        if (self.currentY > self.maxHeight) {
+                            self.fw.css({
+                                transform: 'translate(' + self.currentX + 'px,' + 0 + 'px)'
+                            })
+                            self.currentY = 0;
+                        }
+
+                    },
+                    initEvent: () => {
+                        var self = floatWindow;
+                        self.fw.on("mouseenter", () => {
+                            clearTimeout(self.timer);
+
+                            var { top, left } = self.fw.position();
+                            self.fw.css({
+                                "transform": 'translate(' + left + 'px,' + top + 'px)',
+                                "transition-duration": '0'
+                            })
+                            self.currentX = left;
+                            self.currentY = top;
+                        }).on("mouseout", () => {
+                            self.move();
+                        }).on("click", () => {
+                            location.href = "${ news.url }";
+                        });
+
+                        $(window).on('resize', () => {
+                            clearTimeout(self.timer);
+
+                            var { top, left } = self.fw.position();
+                            self.fw.css({
+                                "transform": 'translate(' + left + 'px,' + top + 'px)',
+                                "transition-duration": '0'
+                            })
+                            self.currentX = left;
+                            self.currentY = top;
+                            self.calBorder();
+                            self.move();
+                        })
+
+                    }
+
+                }
+            }();
+
+            floatWindow.init();
+
+        }
+
+        })
+
+
+    </script>
+    <style>
+        #fw_box {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 999999;
+            width: 23vw;
+            opacity: 0.9;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0px 14px 16px 2px rgba(0, 40, 112, 0.5);
+            cursor: pointer;
+            transition-timing-function: linear;
+            transition-property: all;
+        }
+
+        #fw_box img {
+            width: 102%;
+            margin-bottom: -2px;
+        }
+
+        @media screen and (max-width: 1024px) {
+            #fw_box {
+                width: 40vw;
+                border-radius: 8px;
+                box-shadow: 0px 6px 12px 1px rgba(0, 40, 112, 0.5);
+            }
+        }
+    </style>
+    <div id="fw_box">
+        <!-- 读取文章源标题图--jsp语法 -->
+        <img src="${news.picUrl}">
+    </div>
+
+
+
+</#list>
